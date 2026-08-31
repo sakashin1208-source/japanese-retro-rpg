@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#121014">
+  <title>妖幻奇譚 〜もののけ草子〜 | 和風レトロRPG (1280x960 ハイレゾHD-2D)</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app-container">
+    <div id="game-console">
+      <!-- ヘッダーバー -->
+      <div id="console-header">
+        <div class="brand-badge">SUPER FAMICOM HD-2D HI-RES</div>
+        <h1 class="game-logo">妖幻奇譚 <span>〜もののけ草子〜</span></h1>
+        <button id="btn-sound-toggle" class="icon-button" aria-label="音量切替">
+          <span id="sound-icon">🔊</span>
+        </button>
+      </div>
+
+      <!-- ゲーム画面コンテナ (1280x960 超高解像度ピクセルパーフェクト) -->
+      <div id="screen-viewport">
+        <canvas id="gameCanvas" width="1280" height="960"></canvas>
+        <div id="tap-instruction-overlay"></div>
+      </div>
+
+      <!-- 下部コントローラーエリア -->
+      <div id="controller-pad">
+        <!-- 十字キー (スライド/マルチタッチ対応) -->
+        <div id="dpad-container">
+          <div id="dpad">
+            <button class="dpad-btn up" data-dir="up" data-key="ArrowUp" aria-label="上">▲</button>
+            <button class="dpad-btn left" data-dir="left" data-key="ArrowLeft" aria-label="左">◀</button>
+            <div class="dpad-center"></div>
+            <button class="dpad-btn right" data-dir="right" data-key="ArrowRight" aria-label="右">▶</button>
+            <button class="dpad-btn down" data-dir="down" data-key="ArrowDown" aria-label="下">▼</button>
+          </div>
+        </div>
+
+        <!-- アクションボタン (A/B) -->
+        <div id="action-cluster">
+          <button class="btn-action btn-b" data-key="KeyX" aria-label="Bボタン (取消・戻る)">
+            <span class="btn-letter">B</span>
+            <span class="btn-sub">取消</span>
+          </button>
+          <button class="btn-action btn-a" data-key="KeyZ" aria-label="Aボタン (決定・話す・攻撃)">
+            <span class="btn-letter">A</span>
+            <span class="btn-sub">決定</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- キーボード操作ガイド (PC表示時) -->
+      <div id="pc-key-guide">
+        <span>[矢印/WASD] 移動</span>
+        <span>[Z/Enter/Space] 決定・話す・攻撃</span>
+        <span>[X/Esc/Shift] 取消・戻る</span>
+        <span>※画面直接タップでも操作可能</span>
+      </div>
+    </div>
+
+    <!-- スマホ縦持ち時の横持ち推奨オーバーレイ -->
+    <div id="rotate-prompt" role="dialog" aria-live="polite">
+      <div class="rotate-inner">
+        <div class="rotate-icon">📱</div>
+        <p class="rotate-title">横向きでのプレイを推奨します</p>
+        <p class="rotate-desc">
+          端末を横にすると画面が約1.4倍大きくなり、<br>
+          文字がぐっと読みやすくなります。
+        </p>
+        <button id="rotate-dismiss" type="button">このまま縦画面で続ける</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- スクリプト群 -->
+  <script src="js/data.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/graphics.js"></script>
+  <script src="js/opening.js"></script>
+  <script src="js/ending.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

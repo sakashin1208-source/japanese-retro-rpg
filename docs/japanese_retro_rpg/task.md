@@ -1,0 +1,35 @@
+# タスクリスト: 全キャラクターのグラフィック品質統一と未整備キャラ新規作成
+
+## 進行状況
+- [x] 1. 【第1部】グラフィック共通品質向上基盤の実装 (`js/graphics.js`) <!-- id: 0 -->
+  - [x] `createOutlinedTile(size, renderFn, outlineColor, w)` の実装（キャラクター系のみ適用、マップタイル除外）
+  - [x] `shade(hex, amt)` カラー明暗計算ヘルパーの実装（光源統一: 上部ハイライト／下部シャドウ）
+  - [x] 発光表現（`ctx.shadowColor` / `ctx.shadowBlur` ＆ `shadowBlur = 0` リセット）の共通パターン化
+- [x] 2. 【第2部・ボス】ボス9体スプライトの最高密度HD-2D刷新 (`js/graphics.js`) <!-- id: 1 -->
+  - [x] `akaoni` (赤鬼・羅刹), `tengu` (大天狗・疾風坊), `youko` (九尾の妖狐・茜)
+  - [x] `boss_hyoka` (雪女・氷華), `boss_mizuchi` (水神・蛟龍), `boss_shuten` (妖魔将・酒呑童子)
+  - [x] `boss_ibaraki` (鬼将・茨木童子), `boss_musokage` (亡霊剣聖・無想影), `boss_shin_youko` (真・九尾の天狐・茜)
+- [x] 3. 【第2部・第一章魔物】第一章の魔物20種の全面刷新 (`js/graphics.js`) <!-- id: 2 -->
+  - [x] `karakasa`, `chochin`, `ittanmomen`, `tanuki`, `kitsunebi`, `rokurokubi`, `wanyudo`, `kappa`, `nurikabe`, `kamaitachi`, `dorotabo`, `akaname`, `kodama`, `tsurube`, `nue`, `nekomata`, `zashiki`, `mushakage`, `hyakume`, `gaki` を12コール以上の高密度ドット絵・表情・陰影に刷新
+- [x] 4. 【第2部・NPC】NPC17名全員の固有スプライト新規作成＆data.js更新 (`js/graphics.js`, `js/data.js`) <!-- id: 3 -->
+  - [x] 第一章(10名): `npc_village_head`, `npc_ohana`, `npc_kannushi`, `npc_smith_genzo`, `npc_taichi`, `npc_merchant_jinbei`, `npc_yone`, `npc_suzu`, `npc_kagemaru`, `npc_yugen`
+  - [x] 第二章(4名): `npc_chobei`, `npc_oshino`, `npc_ashiya`, `npc_kansuke`
+  - [x] 第三章(3名): `npc_abe`, `npc_hime`, `npc_guardsman`
+  - [x] `js/data.js` の `GAME_DATA.npcs` の `spriteKey` を固有キーに更新
+- [x] 5. 【第2部・ポートレート】立ち絵の追加＆会話UI（3層）への完全配線 (`js/graphics.js`, `js/map.js`, `js/battle.js`) <!-- id: 4 -->
+  - [x] ボス9体（192x192）および主要NPC（128x128）のポートレートを生成
+  - [x] `map.js` の `startDialog` / `renderDialog` にポートレート描画（枠＋立ち絵＋テキストレイアウト）を配線
+  - [x] 入力ハンドラ・タップハンドラ・描画関数の3層配線を確認
+- [x] 6. 自動集計スクリプト・ベンチマーク・全数監査の実施 <!-- id: 5 -->
+  - [x] 描画コール数の集計（第一章/第二章/第三章/ボス/NPCの平均値）
+  - [x] `createOutlinedTile` の適用対象確認（マップタイル除外）
+  - [x] `shadowBlur` のリセット漏れゼロ確認
+  - [x] 全アセット初期化時間のベンチマーク確認
+- [x] 7. 【第6次検証対応】G-1: NPCタップ時のポートレート配線漏れ修正 (`js/map.js`) <!-- id: 6 -->
+  - [x] `handleTap` で `clickedNpc.spriteKey` を渡し、タップ時も立ち絵が確実に表示されるよう修正
+  - [x] `startDialog` を呼ぶ全26箇所を点検し、話者が存在する全11箇所で漏れがないことを確認
+- [x] 8. 【第6次検証対応】G-2: ボス9体・主要NPC6名の描き下ろしバストアップ＆整数2倍化 (`js/graphics.js`) <!-- id: 7 -->
+  - [x] ボス9体専用ポートレート（192x192、平均27.0コール）のバストアップ完全描き起こし
+  - [x] 主要NPC6名専用ポートレート（128x128、平均17.5コール）のバストアップ完全描き起こし
+  - [x] その他NPC11名ポートレートの非整数倍（1.5倍等）を完全撤廃し、完全な整数2.0倍（64px→128px）に修正
+  - [x] Chromium実機（`performance.now()`）による初期化時間（平均46.84ms）の再計測と検証完了

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>妖幻奇譚 スプライト書き出しツール</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 24px;
+    background: #16121c; color: #f0eaf8;
+    font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  }
+  h1 { font-size: 20px; color: #ffd666; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #a89fbf; margin-bottom: 20px; }
+  .panel {
+    background: #1e1828; border: 1px solid #4d3820; border-radius: 8px;
+    padding: 16px; margin-bottom: 20px;
+  }
+  button {
+    background: linear-gradient(145deg, #2b7cb6, #164d75);
+    border: 1px solid #70bcf0; color: #fff;
+    padding: 10px 18px; border-radius: 6px; cursor: pointer;
+    font-size: 14px; font-family: inherit; margin: 4px 6px 4px 0;
+  }
+  button:hover { background: #3a86ff; }
+  button.gold {
+    background: linear-gradient(145deg, #b8860b, #7a5808); border-color: #ffd666;
+  }
+  button.gold:hover { background: #d4af37; }
+  #stats { font-size: 13px; color: #a89fbf; margin-top: 10px; line-height: 1.7; }
+  #stats b { color: #ffd666; }
+  .sheet-wrap { overflow-x: auto; border: 1px solid #38281a; border-radius: 6px; background: #0d0a12; }
+  canvas.preview { display: block; image-rendering: pixelated; }
+  .warn { color: #ff9a9a; }
+  code { background: #2a2233; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>妖幻奇譚 〜もののけ草子〜 スプライト書き出しツール</h1>
+<div class="sub">
+  <code>js/graphics.js</code> が生成する全スプライトを、エンジン非依存の PNG アトラス + JSON として書き出します。<br>
+  PixiJS / Godot / Unity のいずれへ移行しても再利用できる形式です。
+</div>
+
+<div class="panel">
+  <button class="gold" id="btn-atlas">アトラス PNG + JSON を書き出し</button>
+  <button id="btn-sheet">一覧シート PNG を書き出し（アート品質の棚卸し用）</button>
+  <button id="btn-each">個別 PNG を連続ダウンロード</button>
+  <div id="stats">読み込み中…</div>
+</div>
+
+<div class="panel">
+  <div class="sub" style="margin:0 0 12px">一覧プレビュー（名前付き・アート品質の確認用）</div>
+  <div class="sheet-wrap"><canvas id="sheet" class="preview"></canvas></div>
+</div>
+
+<!-- 依存なし: graphics.js は GAME_DATA 等を参照しない独立クラス -->
+<script src="../js/graphics.js"></script>
+<script>
+const PAD = 4;              // アトラス内の余白
+const SHEET_COLS = 12;      // 一覧シートの列数
+const SHEET_CELL = 136;     // 一覧シートの1マス（最大192pxは縮小表示）
+const LABEL_H = 16;
+
+/**
+ * GraphicsEngine の3辞書を平坦なリストへ集約する。
+ * graphics.js は同一 canvas を複数キーに登録している（旧名/新名のエイリアス）ため、
+ * canvas オブジェクトの同一性で重複排除し、1実体につき names[] を持たせる。
+ */
+function collectSprites(gfx) {
+  const byCanvas = new Map();
+  const push = (category, dict) => {
+    Object.keys(dict).sort().forEach(name => {
+      const cv = dict[name];
+      if (!cv || !cv.width) return;
+      const key = `${category}/${name}`;
+      if (byCanvas.has(cv)) byCanvas.get(cv).names.push(key);
+      else byCanvas.set(cv, { category, name, names: [key], canvas: cv, w: cv.width, h: cv.height });
+    });
+  };
+  push('tile',     gfx.tiles);
+  push('sprite',   gfx.sprites);
+  push('portrait', gfx.portraits);
+  return [...byCanvas.values()];
+}
+
+/** 同サイズごとに行を分けて詰める単純パッカー（決定的・破綻しない） */
+function packAtlas(items, maxWidth = 2048) {
+  const bySize = {};
+  items.forEach(it => (bySize[it.w] ||= []).push(it));
+  const sizes = Object.keys(bySize).map(Number).sort((a, b) => a - b);
+
+  const frames = [];
+  let y = PAD;
+  let atlasW = 0;
+
+  sizes.forEach(size => {
+    const perRow = Math.max(1, Math.floor((maxWidth - PAD) / (size + PAD)));
+    let x = PAD, col = 0;
+    bySize[size].forEach(it => {
+      if (col >= perRow) { col = 0; x = PAD; y += size + PAD; }
+      frames.push({ ...it, x, y });
+      atlasW = Math.max(atlasW, x + size + PAD);
+      x += size + PAD;
+      col++;
+    });
+    y += size + PAD;   // サイズ群の切れ目で改行
+  });
+
+  return { frames, width: atlasW, height: y };
+}
+
+function buildAtlasCanvas(pack) {
+  const cv = document.createElement('canvas');
+  cv.width = pack.width; cv.height = pack.height;
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  pack.frames.forEach(f => ctx.drawImage(f.canvas, f.x, f.y));
+  return cv;
+}
+
+/** TexturePacker(JSON Hash)互換 — PixiJS がそのまま読める形式 */
+function buildAtlasJson(pack, imageName) {
+  const framesObj = {};
+  pack.frames.forEach(f => {
+    // エイリアス（同一実体の別名）はすべて同じ矩形を指す
+    f.names.forEach(key => {
+      framesObj[key] = {
+        frame:            { x: f.x, y: f.y, w: f.w, h: f.h },
+        rotated:          false,
+        trimmed:          false,
+        spriteSourceSize: { x: 0, y: 0, w: f.w, h: f.h },
+        sourceSize:       { w: f.w, h: f.h }
+      };
+    });
+  });
+  return {
+    frames: framesObj,
+    meta: {
+      app: 'yougen-kitan export_sprites.html',
+      image: imageName,
+      format: 'RGBA8888',
+      size: { w: pack.width, h: pack.height },
+      scale: '1',
+      generatedAt: new Date().toISOString()
+    }
+  };
+}
+
+/** 名前ラベル付きの一覧シート（人間がアート品質を見るため） */
+function buildContactSheet(items) {
+  const rows = Math.ceil(items.length / SHEET_COLS);
+  const cellH = SHEET_CELL + LABEL_H;
+  const cv = document.createElement('canvas');
+  cv.width  = SHEET_COLS * SHEET_CELL;
+  cv.height = rows * cellH;
+  const ctx = cv.getContext('2d');
+
+  ctx.fillStyle = '#0d0a12';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.imageSmoothingEnabled = false;
+
+  items.forEach((it, i) => {
+    const cx = (i % SHEET_COLS) * SHEET_CELL;
+    const cy = Math.floor(i / SHEET_COLS) * cellH;
+
+    ctx.strokeStyle = '#2a2233';
+    ctx.strokeRect(cx + 0.5, cy + 0.5, SHEET_CELL - 1, cellH - 1);
+
+    // 最大192pxをマスに収める（拡大はしない）
+    const scale = Math.min(1, (SHEET_CELL - 12) / it.w);
+    const dw = it.w * scale, dh = it.h * scale;
+    ctx.drawImage(it.canvas,
+      cx + (SHEET_CELL - dw) / 2,
+      cy + (SHEET_CELL - dh) / 2,
+      dw, dh);
+
+    ctx.fillStyle = it.category === 'tile' ? '#7fc4ff'
+                  : it.category === 'portrait' ? '#ffb7c5' : '#ffd666';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    const suffix = it.names.length > 1 ? ` +${it.names.length - 1}` : '';
+    const label = (it.name.length > 18 ? it.name.slice(0, 17) + '…' : it.name) + suffix;
+    ctx.fillText(label, cx + SHEET_CELL / 2, cy + SHEET_CELL + 11);
+  });
+  return cv;
+}
+
+function downloadCanvas(canvas, filename) {
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, 'image/png');
+}
+
+function downloadText(text, filename) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---- 起動 ----
+let ITEMS = [], PACK = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  const t0 = performance.now();
+  const gfx = new GraphicsEngine();          // ここで全アセットが生成される
+  const genMs = (performance.now() - t0).toFixed(0);
+
+  ITEMS = collectSprites(gfx);
+  PACK  = packAtlas(ITEMS);
+
+  const bySize = {};
+  ITEMS.forEach(it => bySize[it.w] = (bySize[it.w] || 0) + 1);
+  const byCat = {};
+  ITEMS.forEach(it => byCat[it.category] = (byCat[it.category] || 0) + 1);
+  const totalKeys = ITEMS.reduce((s, it) => s + it.names.length, 0);
+  const aliases   = totalKeys - ITEMS.length;
+
+  document.getElementById('stats').innerHTML =
+    `実体 <b>${ITEMS.length}</b> 枚（登録キー ${totalKeys} 個 / うちエイリアス <b class="warn">${aliases}</b> 個は重複排除）` +
+    ` / 生成所要 <b>${genMs}ms</b><br>` +
+    `内訳（種別）: ` + Object.entries(byCat).map(([k, v]) => `${k} <b>${v}</b>`).join(' / ') + `<br>` +
+    `内訳（サイズ）: ` + Object.entries(bySize).sort((a,b)=>a[0]-b[0])
+        .map(([k, v]) => `${k}px <b>${v}</b>`).join(' / ') + `<br>` +
+    `アトラス寸法: <b>${PACK.width} × ${PACK.height}</b> px`;
+
+  // プレビュー表示（等倍だと巨大になるので CSS で幅を抑える）
+  const sheet = buildContactSheet(ITEMS);
+  const view = document.getElementById('sheet');
+  view.width = sheet.width; view.height = sheet.height;
+  view.getContext('2d').drawImage(sheet, 0, 0);
+  view.style.width = Math.min(sheet.width, 1600) + 'px';
+
+  document.getElementById('btn-atlas').onclick = () => {
+    downloadCanvas(buildAtlasCanvas(PACK), 'yougen_sprites.png');
+    setTimeout(() => downloadText(
+      JSON.stringify(buildAtlasJson(PACK, 'yougen_sprites.png'), null, 2),
+      'yougen_sprites.json'), 400);
+  };
+
+  document.getElementById('btn-sheet').onclick = () =>
+    downloadCanvas(sheet, 'yougen_contactsheet.png');
+
+  document.getElementById('btn-each').onclick = () => {
+    if (!confirm(`${ITEMS.length} 個のPNGを連続ダウンロードします。よろしいですか？`)) return;
+    ITEMS.forEach((it, i) =>
+      setTimeout(() => downloadCanvas(it.canvas, `${it.category}_${it.name}.png`), i * 120));
+  };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>妖幻奇譚 v2 - テストランナー</title>
+  <style>
+    body {
+      background: #0f0d14;
+      color: #fcfaf2;
+      font-family: monospace;
+      padding: 20px;
+    }
+    h1 { color: #ffd700; }
+    .test-box {
+      background: #1c1524;
+      border: 1px solid #4d3820;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+    }
+    .pass { color: #2ecc71; font-weight: bold; }
+    .fail { color: #e74c3c; font-weight: bold; }
+    #log { white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
+    #test-canvas { border: 1px solid #333; display: none; }
+  </style>
+</head>
+<body>
+  <h1>妖幻奇譚 〜もののけ草子〜 自動テストスイート</h1>
+  <canvas id="test-canvas" width="1280" height="960"></canvas>
+  <div class="test-box">
+    <div id="summary">テスト準備中...</div>
+  </div>
+  <div class="test-box">
+    <div id="log"></div>
+  </div>
+
+  <script type="module" src="./runTests.js"></script>
+</body>
+</html>

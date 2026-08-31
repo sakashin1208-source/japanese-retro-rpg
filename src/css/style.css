@@ -1,0 +1,359 @@
+/* ==========================================================================
+   妖幻奇譚 〜もののけ草子〜 スタイルシート (src/ 配下 新規構成)
+   ========================================================================== */
+
+:root {
+  --bg-dark: #0f0d14;
+  --console-body: #1c1524;
+  --console-border: #4d3820;
+  --gold: #d4af37;
+  --red: #c92a2a;
+  --blue: #2364aa;
+  --text-main: #fcfaf2;
+  --text-sub: #a89fbf;
+  --font-retro: 'Zen Kaku Gothic New', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* スマホでの誤動作・ズーム・スクロールを徹底防止 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  background-color: var(--bg-dark);
+  font-family: var(--font-retro);
+  color: var(--text-main);
+}
+
+#app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* ゲーム機本体の筐体 */
+#game-console {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  max-width: min(840px, 96vw);
+  background: var(--console-body);
+  border: 2px solid var(--console-border);
+  box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(0,0,0,0.6);
+  padding: 4px 8px 6px;
+}
+
+/* ヘッダー (コンパクト化して画面領域を拡大) */
+#console-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 4px;
+  border-bottom: 1px solid #3d2c1c;
+  flex-shrink: 0;
+}
+
+.brand-badge {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  opacity: 0.85;
+}
+
+.game-logo {
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  color: #ffeed0;
+  text-shadow: 2px 2px 0px #5c181b;
+}
+
+.game-logo span {
+  font-size: 10px;
+  color: #f09199;
+}
+
+.icon-button {
+  background: #2f2238;
+  border: 1px solid #6b5582;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.icon-button:active {
+  background: #503761;
+}
+
+/* ゲーム画面ビューポート (4:3厳密維持) */
+#screen-viewport {
+  position: relative;
+  width: 100%;
+  max-width: min(100%, calc(62vh * 4 / 3));
+  aspect-ratio: 4 / 3;
+  flex: 0 1 auto;
+  max-height: 62vh;
+  background: #000;
+  border: 2px solid #111;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.95);
+  margin: 4px auto 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* SPEC §12 B-10確定仕様: 縮小時のジャギー・ちらつき防止のため auto */
+  image-rendering: auto;
+  background: #000;
+  pointer-events: auto;
+}
+
+/* 下部コントローラーエリア */
+#controller-pad {
+  width: 100%;
+  max-width: min(100%, 640px);
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px 2px;
+  background: #140f1a;
+  border: 1px solid #38281a;
+  border-radius: 8px;
+  margin: 2px auto 0;
+  min-height: 110px;
+}
+
+/* 十字キー (D-Pad) */
+#dpad-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 40px);
+  grid-template-rows: repeat(3, 40px);
+  gap: 2px;
+  background: #251b2c;
+  padding: 3px;
+  border-radius: 10px;
+  border: 2px solid #584168;
+}
+
+.dpad-btn {
+  background: #362940;
+  border: 2px solid #664d78;
+  color: #ffd666;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 5px;
+  touch-action: none;
+  transition: background 0.05s, transform 0.05s;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: #73459c;
+  border-color: #ffd666;
+  transform: scale(0.92);
+}
+
+.dpad-btn.up { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; }
+.dpad-btn.left { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; }
+.dpad-center { grid-column: 2; grid-row: 2; background: #261c2d; border-radius: 2px; }
+.dpad-btn.right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; }
+.dpad-btn.down { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; }
+
+/* アクションボタン (A/Bボタン) */
+#action-cluster {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.btn-action {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #150e1c, 0 6px 10px rgba(0,0,0,0.5);
+  transition: transform 0.05s, box-shadow 0.05s, background 0.05s;
+  touch-action: none;
+  font-family: var(--font-retro);
+}
+
+.btn-action:active, .btn-action.active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #150e1c;
+}
+
+.btn-b {
+  background: linear-gradient(145deg, #b83333, #781b1b);
+  border: 2px solid #f07575;
+  color: #fff;
+}
+.btn-b:active, .btn-b.active {
+  background: #e63946;
+}
+
+.btn-a {
+  background: linear-gradient(145deg, #2b7cb6, #164d75);
+  border: 2px solid #70bcf0;
+  color: #fff;
+  margin-top: -14px;
+}
+.btn-a:active, .btn-a.active {
+  background: #3a86ff;
+}
+
+.btn-letter {
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.btn-sub {
+  font-size: 9px;
+  color: #ffd666;
+  opacity: 0.95;
+}
+
+/* PC操作ガイド */
+#pc-key-guide {
+  display: flex;
+  gap: 10px;
+  font-size: 9px;
+  color: #9f94b8;
+  margin-top: 2px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   スマホ横持ち（ランドスケープモード）対応
+   ========================================================================== */
+@media (orientation: landscape) and (max-height: 500px) {
+  #game-console {
+    max-width: 100%;
+    height: 100%;
+    flex-direction: row;
+    padding: 2px 4px;
+    position: relative;
+  }
+
+  #console-header {
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    right: 6px;
+    border-bottom: none;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #btn-sound-toggle {
+    pointer-events: auto;
+  }
+  .brand-badge, .game-logo {
+    display: none;
+  }
+
+  #screen-viewport {
+    height: 96vh;
+    max-height: 96vh;
+    width: auto;
+    max-width: min(100%, calc(96vh * 4 / 3));
+    aspect-ratio: 4 / 3;
+    flex: 0 0 auto;
+    margin: 0 auto;
+    order: 2;
+  }
+
+  #controller-pad {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    pointer-events: none;
+    padding: 0 12px;
+    margin-top: 0;
+  }
+
+  #dpad-container {
+    pointer-events: auto;
+    opacity: 0.85;
+  }
+  #action-cluster {
+    pointer-events: auto;
+    opacity: 0.85;
+  }
+
+  #pc-key-guide {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   超小型スマホ対応
+   ========================================================================== */
+@media (max-height: 670px) and (orientation: portrait) {
+  #screen-viewport {
+    max-height: 56vh;
+  }
+  #dpad {
+    grid-template-columns: repeat(3, 34px);
+    grid-template-rows: repeat(3, 34px);
+  }
+  .btn-action {
+    width: 50px;
+    height: 50px;
+  }
+  .btn-letter {
+    font-size: 15px;
+  }
+  #pc-key-guide {
+    display: none;
+  }
+}

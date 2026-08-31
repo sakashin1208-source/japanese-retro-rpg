@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>妖幻奇譚 〜もののけ草子〜</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <div id="game-console">
+      <!-- ヘッダー -->
+      <header id="console-header">
+        <span class="brand-badge">MONONOKE ZOUSHI</span>
+        <h1 class="game-logo">妖幻奇譚 <span>〜もののけ草子〜</span></h1>
+        <button id="btn-sound-toggle" class="icon-button" aria-label="音量切替">🔊</button>
+      </header>
+
+      <!-- ゲーム画面 -->
+      <main id="screen-viewport">
+        <canvas id="gameCanvas" width="1280" height="960"></canvas>
+      </main>
+
+      <!-- コントローラー -->
+      <footer id="controller-pad">
+        <div id="dpad-container">
+          <div id="dpad">
+            <button id="dpad-up" class="dpad-btn up" aria-label="上">▲</button>
+            <button id="dpad-left" class="dpad-btn left" aria-label="左">◀</button>
+            <div class="dpad-center"></div>
+            <button id="dpad-right" class="dpad-btn right" aria-label="右">▶</button>
+            <button id="dpad-down" class="dpad-btn down" aria-label="下">▼</button>
+          </div>
+        </div>
+
+        <div id="pc-key-guide">
+          <span>移動: WASD / 矢印</span>
+          <span>決定: Z / Enter</span>
+          <span>取消: X / Esc</span>
+        </div>
+
+        <div id="action-cluster">
+          <button id="btn-b" class="btn-action btn-b" aria-label="Bボタン">
+            <span class="btn-letter">B</span>
+            <span class="btn-sub">取消/品</span>
+          </button>
+          <button id="btn-a" class="btn-action btn-a" aria-label="Aボタン">
+            <span class="btn-letter">A</span>
+            <span class="btn-sub">決定/話</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script type="module">
+    import { Game } from './core/Game.js';
+    import { GameState } from './data/GameState.js';
+    import { GraphicsEngine } from './gfx/GraphicsEngine.js';
+    import { AudioEngine } from './audio/AudioEngine.js';
+
+    import { OpeningScene } from './scenes/OpeningScene.js';
+    import { TitleScene } from './scenes/TitleScene.js';
+    import { MapScene } from './scenes/MapScene.js';
+    import { BattleScene } from './scenes/BattleScene.js';
+    import { EndingScene } from './scenes/EndingScene.js';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const canvas = document.getElementById('gameCanvas');
+      const game = new Game(canvas);
+
+      // エンジン初期化
+      game.state = new GameState();
+      game.graphics = new GraphicsEngine();
+      game.audio = new AudioEngine();
+
+      // 音量ボタン連携
+      const soundBtn = document.getElementById('btn-sound-toggle');
+      if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+          game.audio.unlock();
+          const muted = game.audio.toggleMute();
+          soundBtn.textContent = muted ? '🔇' : '🔊';
+        });
+      }
+
+      // シーン登録
+      game.registerScene('OPENING', new OpeningScene(game));
+      game.registerScene('TITLE', new TitleScene(game));
+      game.registerScene('MAP', new MapScene(game));
+      game.registerScene('BATTLE', new BattleScene(game));
+      game.registerScene('ENDING', new EndingScene(game));
+
+      // ゲーム開始 (初期シーン: OPENING)
+      await game.start('OPENING');
+      window.__GAME__ = game;
+    });
+  </script>
+</body>
+</html>

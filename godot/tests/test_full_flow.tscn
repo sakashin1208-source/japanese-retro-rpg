@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://flowtest001"]
+
+[ext_resource type="Script" path="res://tests/test_full_flow.gd" id="1_ftest"]
+
+[node name="FlowTestRunner" type="Node"]
+script = ExtResource("1_ftest")

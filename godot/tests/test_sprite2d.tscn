@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://testspr2d001"]
+
+[ext_resource type="Script" path="res://tests/test_sprite2d.gd" id="1_test"]
+
+[node name="Test" type="Node2D"]
+script = ExtResource("1_test")

@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmapscene001"]
+
+[ext_resource type="Script" path="res://scripts/scenes/map_scene.gd" id="1_map"]
+
+[node name="MapScene" type="Node2D"]
+script = ExtResource("1_map")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 480)
+
+[node name="TileLayer" type="Node2D" parent="."]
+
+[node name="CharactersLayer" type="Node2D" parent="."]
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+layer = 10

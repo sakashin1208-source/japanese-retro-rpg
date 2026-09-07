@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://testct001"]
+
+[ext_resource type="Script" path="res://tests/test_circle_tex.gd" id="1_test"]
+
+[node name="Test" type="Node2D"]
+script = ExtResource("1_test")

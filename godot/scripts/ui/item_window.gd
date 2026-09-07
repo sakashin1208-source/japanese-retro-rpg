@@ -98,7 +98,7 @@ func handle_custom_input(event: InputEvent) -> void:
 		selected_index = (selected_index + 1) % total_count
 		AudioManager.play_se("se_cursor")
 		refresh_list()
-	elif event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept"):
+	elif event.is_action_pressed("confirm"):
 		if selected_index == GameState.items.size():
 			# もどる
 			AudioManager.play_se("se_cancel")

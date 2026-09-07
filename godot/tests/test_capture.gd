@@ -19,6 +19,6 @@ func _ready() -> void:
 	
 	var img = vp.get_texture().get_image()
 	if img:
-		img.save_png("C:/dev/japanese-retro-rpg/test_render_party.png")
-		print("Saved party screenshot to C:/dev/japanese-retro-rpg/test_render_party.png")
+		img.save_png("res://tests/artifacts/test_render_party.png")
+		print("Saved party screenshot to res://tests/artifacts/test_render_party.png")
 	get_tree().quit(0)

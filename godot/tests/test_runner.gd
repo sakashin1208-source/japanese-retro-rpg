@@ -93,9 +93,17 @@ func run_milestone_tests() -> void:
 	assert_test(port_count == 29, "顔ポートレート 29枚存在 (実測: %d)" % port_count)
 	assert_test((sprite_count + tile_count + port_count) == 166, "高精細ドット絵 166枚完全抽出確認")
 
+	print("\n--- [M4: テーマ・フォント・画面アスペクト比テスト] ---")
+	var custom_theme = ProjectSettings.get_setting("gui/theme/custom")
+	assert_test(custom_theme == "res://assets/ui/main_theme.tres", "グローバルTheme設定 (main_theme.tres)")
+	assert_test(ResourceLoader.exists("res://assets/ui/main_theme.tres"), "main_theme.tres リソース実体存在")
+	assert_test(ResourceLoader.exists("res://assets/fonts/DotGothic16-Regular.ttf"), "DotGothic16-Regular.ttf 実体存在")
+	var aspect = ProjectSettings.get_setting("display/window/stretch/aspect")
+	assert_test(aspect == "keep", "ウィンドウアスペクト比維持設定 (aspect == 'keep')")
+
 func run_acceptance_tests() -> void:
 	print("\n========================================")
-	print("【 受入テスト全7項目 】")
+	print("【 受入テスト全10項目 ＋ 拡張3項目 】")
 	print("========================================")
 	test_acceptance_1()
 	test_acceptance_2()
@@ -107,6 +115,9 @@ func run_acceptance_tests() -> void:
 	test_acceptance_8()
 	test_acceptance_9()
 	test_acceptance_10()
+	test_acceptance_11()
+	test_acceptance_12()
+	test_acceptance_13()
 
 func test_acceptance_1() -> void:
 	GameState.reset()
@@ -352,3 +363,68 @@ func test_acceptance_10() -> void:
 	assert_test(flag[0] == true, "[受入10-9] dialog_finished シグナルが発火し操作ロックが解除される")
 	
 	dialog_box.queue_free()
+
+func test_acceptance_11() -> void:
+	print("\n--- [受入11: 敵技power乗算・技乱数±3検証] ---")
+	GameState.reset()
+	var battle_scene = preload("res://scenes/battle/battle_scene.tscn").instantiate()
+	add_child(battle_scene)
+	battle_scene.setup_battle({"enemy_ids": ["youko"]})
+	
+	var enemy = battle_scene.enemies[0]
+	var hero = battle_scene.party[0]
+	var initial_hp = hero["hp"]
+	
+	# 敵通常攻撃 (power 1.0相当)
+	var normal_act = {"type": "attack", "name": "妖爪の一撃"}
+	battle_scene.perform_enemy_action(enemy, normal_act, 0)
+	var normal_dmg = initial_hp - hero["hp"]
+	assert_test(normal_dmg >= 1, "[受入11-1] 敵通常攻撃でダメージ発生 (実測: %d)" % normal_dmg)
+	
+	# 敵大技 (power 1.6)
+	hero["hp"] = initial_hp
+	var heavy_act = {"type": "foxfire", "name": "妖狐の紅蓮火", "power": 1.6}
+	battle_scene.perform_enemy_action(enemy, heavy_act, 0)
+	var heavy_dmg = initial_hp - hero["hp"]
+	assert_test(heavy_dmg > normal_dmg, "[受入11-2] 敵大技(power:1.6)は通常攻撃より高ダメージ (大技:%d > 通常:%d)" % [heavy_dmg, normal_dmg])
+	
+	battle_scene.queue_free()
+
+func test_acceptance_12() -> void:
+	print("\n--- [受入12: 章移動キー整合・解放判定・双方向後退検証] ---")
+	assert_test(MasterData.chapters.size() == 3, "[受入12-1] 全3章データ存在")
+	for ch in MasterData.chapters:
+		assert_test(ch.has("id") and ch.has("start") and ch.has("name"), "[受入12-2] 章データが id, start, name を正しく保持 (章ID: %s)" % str(ch.get("id")))
+		
+	GameState.reset()
+	var unl1 = MasterData.is_chapter_unlocked(1, GameState.boss_defeated, GameState.artifacts)
+	var unl2 = MasterData.is_chapter_unlocked(2, GameState.boss_defeated, GameState.artifacts)
+	var unl3 = MasterData.is_chapter_unlocked(3, GameState.boss_defeated, GameState.artifacts)
+	assert_test(unl1 == true and unl2 == false and unl3 == false, "[受入12-3] 初期状態は第1章のみアンロック")
+	
+	GameState.boss_defeated["youko"] = true
+	var unl2_after = MasterData.is_chapter_unlocked(2, GameState.boss_defeated, GameState.artifacts)
+	assert_test(unl2_after == true, "[受入12-4] 九尾の妖狐討伐後に第2章アンロック")
+	
+	var unl1_back = MasterData.is_chapter_unlocked(1, GameState.boss_defeated, GameState.artifacts)
+	assert_test(unl1_back == true, "[受入12-5] 第2章到達後も第1章へ後退可能")
+
+func test_acceptance_13() -> void:
+	print("\n--- [受入13: 静的検査 ui_accept混在ゼロ検証] ---")
+	var ui_accept_matches: Array[String] = []
+	var scan_dirs := ["res://scripts", "res://scripts/core", "res://scripts/data", "res://scripts/scenes", "res://scripts/ui", "res://scripts/audio"]
+	for d_path in scan_dirs:
+		var d := DirAccess.open(d_path)
+		if d:
+			d.list_dir_begin()
+			var fn := d.get_next()
+			while fn != "":
+				if fn.ends_with(".gd"):
+					var f := FileAccess.open("%s/%s" % [d_path, fn], FileAccess.READ)
+					if f:
+						var txt := f.get_as_text()
+						if txt.contains("ui_accept"):
+							ui_accept_matches.append("%s/%s" % [d_path, fn])
+				fn = d.get_next()
+				
+	assert_test(ui_accept_matches.is_empty(), "[受入13-1] GDScript内でui_accept直書き残存ゼロ (残存: %s)" % str(ui_accept_matches))

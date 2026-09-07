@@ -24,7 +24,7 @@ func _ready() -> void:
 	var vp = get_viewport()
 	var img = vp.get_texture().get_image()
 	if img:
-		var save_path = "C:/dev/japanese-retro-rpg/battle_target_selection_verified.png"
+		var save_path = "res://tests/artifacts/battle_target_selection_verified.png"
 		img.save_png(save_path)
 		print("Saved battle target screenshot to: ", save_path)
 	

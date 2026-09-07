@@ -51,6 +51,16 @@ func _ready() -> void:
 	
 	tile_layer.draw.connect(_on_tile_layer_draw)
 	
+	if SceneManager.battle_params.has("chapter_num"):
+		GameState.current_chapter = SceneManager.battle_params["chapter_num"]
+		var ch_info = MasterData.get_chapter_info(GameState.current_chapter)
+		if ch_info and ch_info.has("start"):
+			var st: Dictionary = ch_info["start"]
+			GameState.player_pos["grid_x"] = st.get("x", 12)
+			GameState.player_pos["grid_y"] = st.get("y", 14)
+			GameState.player_pos["facing"] = st.get("facing", "down")
+		SceneManager.battle_params.erase("chapter_num")
+		
 	current_chapter = GameState.current_chapter
 	player_gx = GameState.player_pos.get("grid_x", 12)
 	player_gy = GameState.player_pos.get("grid_y", 14)
@@ -121,6 +131,7 @@ func setup_ui() -> void:
 	menu_window.status_requested.connect(_on_status_requested)
 	menu_window.item_requested.connect(_on_item_requested)
 	menu_window.chapter_move_requested.connect(_on_chapter_move_requested)
+	menu_window.chapter_move_denied.connect(_on_chapter_move_denied)
 	menu_window.save_requested.connect(_on_save_requested)
 	ui_layer.add_child(menu_window)
 	
@@ -443,16 +454,16 @@ func handle_movement_input() -> void:
 	var dx := 0
 	var dy := 0
 	
-	if Input.is_action_pressed("ui_up"):
+	if Input.is_action_pressed("move_up"):
 		dy = -1
 		player_facing = "up"
-	elif Input.is_action_pressed("ui_down"):
+	elif Input.is_action_pressed("move_down"):
 		dy = 1
 		player_facing = "down"
-	elif Input.is_action_pressed("ui_left"):
+	elif Input.is_action_pressed("move_left"):
 		dx = -1
 		player_facing = "left"
-	elif Input.is_action_pressed("ui_right"):
+	elif Input.is_action_pressed("move_right"):
 		dx = 1
 		player_facing = "right"
 		
@@ -521,7 +532,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		menu_window.handle_custom_input(event)
 		return
 		
-	if event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept"):
+	if event.is_action_pressed("confirm"):
 		try_interact()
 	elif event.is_action_pressed("cancel"):
 		AudioManager.play_se("se_select")
@@ -591,6 +602,9 @@ func _on_item_requested() -> void:
 
 func _on_chapter_move_requested(ch: int) -> void:
 	SceneManager.change_scene("MAP", {"chapter_num": ch}, 0.5)
+
+func _on_chapter_move_denied(reason: String) -> void:
+	dialog_box.start_dialog("絵巻物手鑑", [reason], "")
 
 func _on_save_requested() -> void:
 	GameState.player_pos["grid_x"] = player_gx

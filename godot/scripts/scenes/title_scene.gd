@@ -67,7 +67,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		select_prev()
 	elif event.is_action_pressed("ui_down"):
 		select_next()
-	elif event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept"):
+	elif event.is_action_pressed("confirm"):
 		execute_selected()
 
 func select_prev() -> void:

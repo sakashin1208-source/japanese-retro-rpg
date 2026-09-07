@@ -124,53 +124,73 @@ func prompt_actor_input() -> void:
 	render_party_cards()
 
 func refresh_commands() -> void:
-	for c in command_list.get_children():
-		c.queue_free()
+	var children := command_list.get_children()
+	while children.size() > COMMANDS.size():
+		var extra = children.pop_back()
+		extra.queue_free()
 		
 	for i in range(COMMANDS.size()):
-		var lbl := Label.new()
 		var prefix := "▶ " if i == command_cursor else "   "
-		lbl.text = prefix + COMMANDS[i]
-		lbl.add_theme_font_size_override("font_size", 34)
-		lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.4) if i == command_cursor else Color.WHITE)
-		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-		var cmd_idx := i
-		lbl.gui_input.connect(func(ev: InputEvent) -> void:
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				if command_cursor == cmd_idx:
-					execute_command()
-				else:
-					command_cursor = cmd_idx
-					AudioManager.play_se("se_cursor")
-					refresh_commands()
-		)
-		command_list.add_child(lbl)
+		var text_val: String = prefix + COMMANDS[i]
+		var col := Color(1, 0.9, 0.4) if i == command_cursor else Color.WHITE
+		
+		var lbl: Label
+		if i < children.size():
+			lbl = children[i] as Label
+		else:
+			lbl = Label.new()
+			lbl.add_theme_font_size_override("font_size", 34)
+			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+			var cmd_idx := i
+			lbl.gui_input.connect(func(ev: InputEvent) -> void:
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+					if command_cursor == cmd_idx:
+						execute_command()
+					else:
+						command_cursor = cmd_idx
+						AudioManager.play_se("se_cursor")
+						refresh_commands()
+			)
+			command_list.add_child(lbl)
+			
+		lbl.text = text_val
+		lbl.add_theme_color_override("font_color", col)
 
 func refresh_skills() -> void:
-	for c in skill_list.get_children():
-		c.queue_free()
-		
 	var hero: Dictionary = party[current_actor_idx]
 	var skills: Array = hero.get("skills", [])
+	var children := skill_list.get_children()
+	while children.size() > skills.size():
+		var extra = children.pop_back()
+		extra.queue_free()
+		
 	for i in range(skills.size()):
 		var sk: Dictionary = MasterData.get_skill(skills[i])
-		var lbl := Label.new()
 		var prefix := "▶ " if i == skill_cursor else "   "
-		lbl.text = "%s%s (%d MP)" % [prefix, sk.get("name", ""), sk.get("mpCost", 0)]
-		lbl.add_theme_font_size_override("font_size", 28)
-		lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.4) if i == skill_cursor else Color.WHITE)
-		lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-		var s_idx := i
-		lbl.gui_input.connect(func(ev: InputEvent) -> void:
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				if skill_cursor == s_idx:
-					_confirm_current_skill()
-				else:
-					skill_cursor = s_idx
-					AudioManager.play_se("se_cursor")
-					refresh_skills()
-		)
-		skill_list.add_child(lbl)
+		var text_val: String = "%s%s (%d MP)" % [prefix, sk.get("name", ""), sk.get("mpCost", 0)]
+		var col := Color(1, 0.9, 0.4) if i == skill_cursor else Color.WHITE
+		
+		var lbl: Label
+		if i < children.size():
+			lbl = children[i] as Label
+		else:
+			lbl = Label.new()
+			lbl.add_theme_font_size_override("font_size", 28)
+			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+			var s_idx := i
+			lbl.gui_input.connect(func(ev: InputEvent) -> void:
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+					if skill_cursor == s_idx:
+						_confirm_current_skill()
+					else:
+						skill_cursor = s_idx
+						AudioManager.play_se("se_cursor")
+						refresh_skills()
+			)
+			skill_list.add_child(lbl)
+			
+		lbl.text = text_val
+		lbl.add_theme_color_override("font_color", col)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if phase != "INPUT":
@@ -336,9 +356,6 @@ func start_target_selection(type: String, action: Dictionary) -> void:
 	refresh_target_ui()
 
 func refresh_target_ui() -> void:
-	for c in command_list.get_children():
-		c.queue_free()
-		
 	if target_type == "enemy":
 		actor_name_label.text = "【敵を選択】"
 		var living_e: Array = get_living_enemies()
@@ -348,25 +365,38 @@ func refresh_target_ui() -> void:
 		if target_cursor >= living_e.size():
 			target_cursor = max(0, living_e.size() - 1)
 			
+		var children := command_list.get_children()
+		while children.size() > living_e.size():
+			var extra = children.pop_back()
+			extra.queue_free()
+			
 		for i in range(living_e.size()):
 			var e: Dictionary = living_e[i]
-			var lbl := Label.new()
 			var prefix := "▶ " if i == target_cursor else "   "
-			lbl.text = "%s%s" % [prefix, e.get("name", "魔物")]
-			lbl.add_theme_font_size_override("font_size", 32)
-			lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.4) if i == target_cursor else Color.WHITE)
-			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-			var t_idx := i
-			lbl.gui_input.connect(func(ev: InputEvent) -> void:
-				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-					if target_cursor == t_idx:
-						confirm_target_selection()
-					else:
-						target_cursor = t_idx
-						AudioManager.play_se("se_cursor")
-						refresh_target_ui()
-			)
-			command_list.add_child(lbl)
+			var text_val: String = "%s%s" % [prefix, e.get("name", "魔物")]
+			var col := Color(1, 0.9, 0.4) if i == target_cursor else Color.WHITE
+			
+			var lbl: Label
+			if i < children.size():
+				lbl = children[i] as Label
+			else:
+				lbl = Label.new()
+				lbl.add_theme_font_size_override("font_size", 32)
+				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				var t_idx := i
+				lbl.gui_input.connect(func(ev: InputEvent) -> void:
+					if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						if target_cursor == t_idx:
+							confirm_target_selection()
+						else:
+							target_cursor = t_idx
+							AudioManager.play_se("se_cursor")
+							refresh_target_ui()
+				)
+				command_list.add_child(lbl)
+				
+			lbl.text = text_val
+			lbl.add_theme_color_override("font_color", col)
 			
 		update_target_indicator_enemy(living_e[target_cursor])
 	else:
@@ -378,25 +408,38 @@ func refresh_target_ui() -> void:
 		if target_cursor >= living_p.size():
 			target_cursor = max(0, living_p.size() - 1)
 			
+		var children := command_list.get_children()
+		while children.size() > living_p.size():
+			var extra = children.pop_back()
+			extra.queue_free()
+			
 		for i in range(living_p.size()):
 			var p: Dictionary = living_p[i]
-			var lbl := Label.new()
 			var prefix := "▶ " if i == target_cursor else "   "
-			lbl.text = "%s%s (%d/%d)" % [prefix, p.get("name", "仲間"), p.get("hp", 0), p.get("maxHp", 0)]
-			lbl.add_theme_font_size_override("font_size", 30)
-			lbl.add_theme_color_override("font_color", Color(1, 0.9, 0.4) if i == target_cursor else Color.WHITE)
-			lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-			var t_idx := i
-			lbl.gui_input.connect(func(ev: InputEvent) -> void:
-				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-					if target_cursor == t_idx:
-						confirm_target_selection()
-					else:
-						target_cursor = t_idx
-						AudioManager.play_se("se_cursor")
-						refresh_target_ui()
-			)
-			command_list.add_child(lbl)
+			var text_val: String = "%s%s (%d/%d)" % [prefix, p.get("name", "仲間"), p.get("hp", 0), p.get("maxHp", 0)]
+			var col := Color(1, 0.9, 0.4) if i == target_cursor else Color.WHITE
+			
+			var lbl: Label
+			if i < children.size():
+				lbl = children[i] as Label
+			else:
+				lbl = Label.new()
+				lbl.add_theme_font_size_override("font_size", 30)
+				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				var t_idx := i
+				lbl.gui_input.connect(func(ev: InputEvent) -> void:
+					if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						if target_cursor == t_idx:
+							confirm_target_selection()
+						else:
+							target_cursor = t_idx
+							AudioManager.play_se("se_cursor")
+							refresh_target_ui()
+				)
+				command_list.add_child(lbl)
+				
+			lbl.text = text_val
+			lbl.add_theme_color_override("font_color", col)
 			
 		update_target_indicator_ally(living_p[target_cursor])
 
@@ -611,8 +654,8 @@ func perform_party_skill(hero: Dictionary, skill: Dictionary, target_idx: int) -
 	var sk_target: String = skill.get("target", "enemy_single")
 	if sk_target == "enemy_all":
 		var living := get_living_enemies()
-		var variance: int = randi_range(-2, 2)
 		for e in living:
+			var variance: int = randi_range(-3, 3)
 			var dmg: int = 1
 			if skill.get("type") == "physical":
 				dmg = max(1, int(hero["atk"] * hero["buffAtk"] * 1.4 * skill["power"] - e["def"] * e["buffDef"] * 0.5 + variance))
@@ -645,7 +688,7 @@ func perform_party_skill(hero: Dictionary, skill: Dictionary, target_idx: int) -
 		return
 		
 	var target: Dictionary = enemies[target_idx]
-	var variance: int = randi_range(-2, 2)
+	var variance: int = randi_range(-3, 3)
 	var dmg: int = 1
 	# 物理・魔法分岐 (指示書§4(1) 必須仕様)
 	if skill.get("type") == "physical":

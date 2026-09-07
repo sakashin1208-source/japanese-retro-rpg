@@ -180,7 +180,7 @@ func handle_custom_input(event: InputEvent) -> void:
 		skill_cursor = (skill_cursor + 1) % skills.size()
 		AudioManager.play_se("se_cursor")
 		refresh_display()
-	elif event.is_action_pressed("cancel") or event.is_action_pressed("confirm") or event.is_action_pressed("ui_accept"):
+	elif event.is_action_pressed("cancel") or event.is_action_pressed("confirm"):
 		AudioManager.play_se("se_cancel")
 		close()
 
